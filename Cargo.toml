@@ -1,5 +1,6 @@
 [package]
-name = "fast-search"
+author = "David Arenas"
+name = "fsearch"
 version = "0.1.0"
 edition = "2024"
 
