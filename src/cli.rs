@@ -8,4 +8,8 @@ pub struct Args {
 
     /// File to search
     pub search: String,
+
+    /// Search by case insensitive
+    #[arg(short)]
+    pub insensitive: bool,
 }

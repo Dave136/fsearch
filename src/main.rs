@@ -2,14 +2,9 @@ mod cli;
 mod colour;
 mod file;
 
-use std::path::Path;
-
+use crate::file::File;
 use clap::Parser;
-
-use crate::file::search;
-
-/// Find based in the current_dir the file to settled in search
-/// it should return the result or an empty vec
+use std::{path::Path, process};
 
 fn main() {
     let args = cli::Args::parse();
@@ -17,7 +12,14 @@ fn main() {
     let root_path = Path::new(&args.root_path);
     let search_str = args.search.as_str();
 
-    if let Ok(results) = search(root_path, search_str) {
+    let file = File::new(args.insensitive);
+
+    if let Ok(results) = file.search(root_path, search_str) {
+        if results.is_empty() {
+            println!("No results found");
+            process::exit(1);
+        }
+
         results
             .iter()
             .for_each(|result| println!("Found => {result}"));
@@ -30,16 +32,18 @@ mod tests {
 
     #[test]
     fn should_not_return_hidden_files() {
+        let file = File::new(true);
         let path = Path::new(".");
-        let results = search(path, "no_exist").unwrap();
+        let results = file.search(path, "no_exist").unwrap();
 
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_list_cargo_items() {
+        let file = File::new(true);
         let path = Path::new(".");
-        let results = search(path, "Cargo").unwrap();
+        let results = file.search(path, "Cargo").unwrap();
 
         assert_eq!(results.len(), 2);
     }
