@@ -15,10 +15,9 @@ impl File {
         Self { insensitive }
     }
 
-    fn has_hidden_files(path: &Path) -> bool {
-        if let Some(file) = path.file_name()
-            && let Some(file) = file.to_str()
-        {
+    fn is_hidden(path: &Path) -> bool {
+        if let Some(file) = path.file_name() {
+            let file = file.to_string_lossy().to_string();
             if file.starts_with(".") {
                 return true;
             }
@@ -37,6 +36,10 @@ impl File {
         false
     }
 
+    fn match_indices() {
+        todo!("")
+    }
+
     fn get_files(
         &self,
         current_dir: &Path,
@@ -47,15 +50,14 @@ impl File {
             let directory = dir?;
             let dir_entry_path = directory.path();
 
-            if Self::has_hidden_files(&dir_entry_path) {
+            if Self::is_hidden(&dir_entry_path) {
                 continue;
             }
 
-            if dir_entry_path.is_dir() && Self::should_ignore(&dir_entry_path) {
-                continue;
-            }
-
-            if dir_entry_path.is_dir() && !Self::should_ignore(&dir_entry_path) {
+            if dir_entry_path.is_dir() {
+                if Self::should_ignore(&dir_entry_path) {
+                    continue;
+                };
                 self.get_files(&dir_entry_path, search, results)?;
                 continue;
             }
@@ -68,31 +70,29 @@ impl File {
                             .contains(search.to_lowercase().as_str())
                     {
                         let search = search.to_lowercase();
-                        if let Some(display_path) = dir_entry_path.to_str() {
-                            let path_temp = display_path.to_lowercase();
-                            let index = path_temp
-                                .match_indices(&search)
-                                .collect::<Vec<(usize, &str)>>();
+                        let display_path = dir_entry_path.to_string_lossy().to_string();
+                        let path_temp = display_path.to_lowercase();
+                        let index = path_temp
+                            .match_indices(&search)
+                            .collect::<Vec<(usize, &str)>>();
 
-                            let mut final_text = String::new();
-                            let mut cursor = 0;
+                        let mut final_text = String::new();
+                        let mut cursor = 0;
 
-                            for item in index {
-                                let before_text = &display_path[cursor..item.0];
-                                final_text.push_str(before_text);
+                        for item in index {
+                            let before_text = &display_path[cursor..item.0];
+                            final_text.push_str(before_text);
 
-                                let highlight_slice =
-                                    &display_path[item.0..(item.0 + search.len())];
-                                let highlight = paint(Colour::Red, highlight_slice);
+                            let highlight_slice = &display_path[item.0..(item.0 + search.len())];
+                            let highlight = paint(Colour::Red, highlight_slice);
 
-                                final_text.push_str(&highlight);
-                                cursor = item.0 + search.len();
-                            }
-
-                            final_text.push_str(&display_path[cursor..]);
-
-                            results.push(final_text);
+                            final_text.push_str(&highlight);
+                            cursor = item.0 + search.len();
                         }
+
+                        final_text.push_str(&display_path[cursor..]);
+
+                        results.push(final_text);
                         continue;
                     }
 
